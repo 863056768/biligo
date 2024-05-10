@@ -1,7 +1,7 @@
 package main
 
 import (
-	bg "github.com/iyear/biligo"
+	bg "github.com/863056768/biligo"
 	"log"
 	"time"
 )

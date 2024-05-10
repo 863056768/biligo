@@ -3,8 +3,8 @@ package biligo
 import (
 	"encoding/json"
 	"github.com/golang/protobuf/proto"
-	"github.com/iyear/biligo/internal/util"
-	"github.com/iyear/biligo/proto/dm"
+	"github.com/863056768/biligo/internal/util"
+	"github.com/863056768/biligo/proto/dm"
 	"github.com/tidwall/gjson"
 	"net/http"
 	"strconv"
