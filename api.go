@@ -187,3 +187,49 @@ func (h *baseClient) upload(base, endpoint string, payload map[string]string, fi
 	// 文件不输出，否则全是乱码
 	return h.request(req, payload)
 }
+
+func (h *baseClient) multipartRaw(base, endpoint string, payload map[string]string, mAfter func(m *multipart.Writer) error, reqAfter func(r *http.Request)) ([]byte, error) {
+	var (
+		req *http.Request
+		err error
+	)
+	link := base + endpoint
+
+	body := new(bytes.Buffer)
+	mp := multipart.NewWriter(body)
+
+	for k, v := range payload {
+		if err = mp.WriteField(k, v); err != nil {
+			return nil, err
+		}
+	}
+
+	// 侵入处理field
+	if mAfter != nil {
+		if err = mAfter(mp); err != nil {
+			return nil, err
+		}
+	}
+
+	// 为mp添加结束符
+	if err = mp.Close(); err != nil {
+		return nil, err
+	}
+
+	// 只支持POST
+	if req, err = http.NewRequest(http.MethodPost, link, body); err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Origin", "https://www.bilibili.com")
+	req.Header.Add("Referer", "https://www.bilibili.com")
+	req.Header.Add("Content-type", mp.FormDataContentType())
+	req.Header.Add("User-Agent", h.ua)
+
+	// 侵入处理req
+	if reqAfter != nil {
+		reqAfter(req)
+	}
+
+	return h.request(req, payload)
+}

@@ -167,6 +167,35 @@ func (b *BiliClient) UploadParse(base, endpoint string, payload map[string]strin
 	return b.parse(raw)
 }
 
+// MultipartRaw 发送Multipart表单数据
+//
+// base末尾带/
+func (b *BiliClient) MultipartRaw(base, endpoint string, payload map[string]string) ([]byte, error) {
+	raw, err := b.multipartRaw(base, endpoint, payload,
+		func(m *multipart.Writer) error {
+			return m.WriteField("csrf", b.auth.BiliJCT)
+		},
+		func(r *http.Request) {
+			r.Header.Add("Cookie", fmt.Sprintf("DedeUserID=%s;SESSDATA=%s;DedeUserID__ckMd5=%s",
+				b.auth.DedeUserID, b.auth.SESSDATA, b.auth.DedeUserIDCkMd5))
+		})
+	if err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
+
+// MultipartRawParse 发送Multipart表单数据
+//
+// base末尾带/
+func (b *BiliClient) MultipartRawParse(base, endpoint string, payload map[string]string) (*Response, error) {
+	raw, err := b.MultipartRaw(base, endpoint, payload)
+	if err != nil {
+		return nil, err
+	}
+	return b.parse(raw)
+}
+
 // GetCookieAuth
 //
 // 获取Cookie信息
@@ -2695,10 +2724,9 @@ func (b *BiliClient) DynaGetDrafts() (*DynaGetDraft, error) {
 //
 // bubble: 气泡弹幕?默认0
 func (b *BiliClient) LiveSendDanmaku(roomID int64, color int64, fontsize int, mode int, msg string, bubble int) error {
-	resp, err := b.RawParse(
+	resp, err := b.MultipartRawParse(
 		BiliLiveURL,
 		"msg/send",
-		"POST",
 		map[string]string{
 			"roomid":   strconv.FormatInt(roomID, 10),
 			"color":    strconv.FormatInt(color, 10),
