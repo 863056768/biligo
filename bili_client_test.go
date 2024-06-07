@@ -1010,3 +1010,25 @@ func TestBiliClient_UserGetInfo(t *testing.T) {
 	t.Logf("mid: %d,name: %s,sex: %s,level: %d,sign: %s", r.MID, r.Name, r.Sex, r.Level, r.Sign)
 	t.Logf("live: %d,officialDesc: %s,nameplateName: %s,pendantName: %s,vip: %s", r.LiveRoom.LiveStatus, r.Official.Title, r.Nameplate.Name, r.Pendant.Name, r.Vip.Label.Text)
 }
+
+func Test_spyderData_spyder(t *testing.T) {
+	var data = spyderData{
+		Platform:     "web",
+		ParentAreaId: 1,
+		AreaId:       399,
+		Seq:          2,
+		RoomId:       7114215,
+
+		Buvid: "AUTO4816876455717253",
+		Uuid:  "4b425f62-fda1-4918-b13a-c797c15c7a0f",
+
+		Ets:  1715337554,
+		Time: 60,
+		Ts:   1715337614626,
+	}
+
+	s := data.spyder("seacasdgyijfhofiuxoannn", []int64{0, 1, 2, 3, 4, 5, 6})
+	if s != "4f4fbad2a5bcf65c866d48c7d0d4ee8b" {
+		t.Fatalf("got: %s, want: 4f4fbad2a5bcf65c866d48c7d0d4ee8b", s)
+	}
+}

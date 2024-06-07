@@ -2,9 +2,9 @@ package biligo
 
 import (
 	"encoding/json"
-	"github.com/golang/protobuf/proto"
 	"github.com/863056768/biligo/internal/util"
 	"github.com/863056768/biligo/proto/dm"
+	"github.com/golang/protobuf/proto"
 	"github.com/tidwall/gjson"
 	"net/http"
 	"strconv"
@@ -1101,6 +1101,7 @@ func (c *CommClient) LiveGetRoomInfoByID(roomID int64) (*LiveRoomInfoByID, error
 	if err != nil {
 		return nil, err
 	}
+
 	var r = &LiveRoomInfoByID{}
 	if err = json.Unmarshal(resp.Data, &r); err != nil {
 		return nil, err
@@ -1332,7 +1333,6 @@ func (c *CommClient) CommentGetMain(oid int64, tp int, mode int, next int, ps in
 }
 
 // CommentGetReply 获取指定评论和二级回复
-//
 //
 // oid: 对应类型的ID
 //

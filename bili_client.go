@@ -3,17 +3,18 @@ package biligo
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/863056768/biligo/internal/util"
-	"github.com/863056768/biligo/proto/dm"
-	"github.com/pkg/errors"
-	"github.com/tidwall/gjson"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/863056768/biligo/internal/util"
+	"github.com/863056768/biligo/proto/dm"
+	"github.com/golang/protobuf/proto"
+	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
 )
 
 type BiliClient struct {
@@ -2748,6 +2749,31 @@ func (b *BiliClient) LiveSendDanmaku(roomID int64, color int64, fontsize int, mo
 	}
 	return nil
 }
+
+// LiveLikeReport sends a like report for a live event.
+//
+// Parameters:
+// - roomID: the ID of the room.
+// - anchor_id: the UID of the Streamer.
+// - uid: the ID of the user.
+// Returns an error.
+func (b *BiliClient) LiveLikeReport(roomID, anchor_id, uid int64) error {
+	_, err := b.Raw(
+		BiliLiveURL,
+		"xlive/app-ucenter/v1/like_info_v3/like/likeReportV3",
+		"POST",
+		map[string]string{
+			"click_time": "1",
+			"room_id":    strconv.FormatInt(roomID, 10),
+			"anchor_id":  strconv.FormatInt(anchor_id, 10),
+			"uid":        strconv.FormatInt(uid, 10),
+			"ts":         strconv.FormatInt(time.Now().Unix(), 10),
+			"visit_id":   "",
+		},
+	)
+	return err
+}
+
 func (b *BiliClient) UserGetInfo(mid int64) (*UserInfo, error) {
 	resp, err := b.RawParse(
 		BiliApiURL,
@@ -2765,4 +2791,172 @@ func (b *BiliClient) UserGetInfo(mid int64) (*UserInfo, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+func (b *BiliClient) LiveGetInfoByRoom(roomID int64) (*LiveInfoByRoom, error) {
+	resp, err := b.RawParse(
+		BiliLiveURL,
+		"xlive/web-room/v1/index/getInfoByRoom",
+		"GET",
+		map[string]string{
+			"room_id": strconv.FormatInt(roomID, 10),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var respData map[string]json.RawMessage
+	if err := json.Unmarshal(resp.Data, &respData); err != nil {
+		return nil, err
+	}
+
+	var r = &LiveInfoByRoom{}
+	if err = json.Unmarshal(respData["room_info"], &r); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// LiveSendHeartbeatE 发送E心跳
+//
+// [parentAreaID, areaID, seq, roomID]: id
+//
+// [buvid, uuid]: device
+//
+// roomUID: 主播UID
+func (b *BiliClient) LiveSendHeartbeatE(
+	parentAreaID, areaID, seq, roomID int64,
+	buvid, uuid string,
+	roomUID int64,
+) (*LiveHeartbeat, error) {
+	resp, err := b.RawParse(
+		BiliLiveTrackURL,
+		"xlive/data-interface/v1/x25Kn/E",
+		"POST",
+		map[string]string{
+			"id":         fmt.Sprintf("[%d,%d,%d,%d]", parentAreaID, areaID, seq, roomID),
+			"device":     fmt.Sprintf("[%q,%q]", buvid, uuid),
+			"ruid":       strconv.FormatInt(roomUID, 10),
+			"ts":         strconv.FormatInt(util.GetCST8Time(time.Now()).UnixMilli(), 10),
+			"is_patch":   "0",
+			"heart_beat": "[]",
+			"ua":         b.baseClient.ua,
+			"visit_id":   "",
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	var r = &LiveHeartbeat{}
+	if err = json.Unmarshal(resp.Data, &r); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// LiveSendHeartbeatX 发送X心跳
+//
+// s: 经过spyder加密后的数据, 除`roomUID`外，其余参数均参与加密
+//
+// [parentAreaID, areaID, seq, roomID]: id
+//
+// [buvid, uuid]: device
+//
+// roomUID: 主播UID
+//
+// ets: 上次请求返回的timestamp
+//
+// heartBeatInterval: 上次请求返回的heartBeatInterval
+//
+// secretKey: 上次请求返回的secretKey
+//
+// secretRule: 上次请求返回的secretRule
+func (b *BiliClient) LiveSendHeartbeatX(
+	parentAreaID, areaID, seq, roomID int64,
+	buvid, uuid string,
+	roomUID, ets, heartBeatInterval int64,
+	secretKey string, secretRule []int64,
+) (*LiveHeartbeat, error) {
+	s := spyderData{
+		Platform: "web",
+
+		ParentAreaId: parentAreaID,
+		AreaId:       areaID,
+		Seq:          seq,
+		RoomId:       roomID,
+
+		Buvid: buvid,
+		Uuid:  uuid,
+
+		Ets:  ets,
+		Time: heartBeatInterval,
+		Ts:   util.GetCST8Time(time.Now()).UnixMilli(),
+	}
+
+	resp, err := b.RawParse(
+		BiliLiveTrackURL,
+		"xlive/data-interface/v1/x25Kn/X",
+		"POST",
+		map[string]string{
+			"s":         s.spyder(secretKey, secretRule),
+			"id":        fmt.Sprintf("[%d,%d,%d,%d]", parentAreaID, areaID, seq, roomID),
+			"device":    fmt.Sprintf("[%q,%q]", buvid, uuid),
+			"ruid":      strconv.FormatInt(roomUID, 10),
+			"ets":       strconv.FormatInt(ets, 10),
+			"benchmark": secretKey,
+			"time":      strconv.FormatInt(heartBeatInterval, 10),
+			"ts":        strconv.FormatInt(s.Ts, 10),
+			"ua":        b.baseClient.ua,
+			"visit_id":  "",
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	var r = &LiveHeartbeat{}
+	if err = json.Unmarshal(resp.Data, &r); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// 使用结构体可以保证json.Marshal后的顺序
+type spyderData struct {
+	Platform     string `json:"platform"` // "web"
+	ParentAreaId int64  `json:"parent_id"`
+	AreaId       int64  `json:"area_id"`
+	Seq          int64  `json:"seq_id"`
+	RoomId       int64  `json:"room_id"`
+
+	Buvid string `json:"buvid"`
+	Uuid  string `json:"uuid"`
+
+	Ets  int64 `json:"ets"`
+	Time int64 `json:"time"`
+	Ts   int64 `json:"ts"`
+}
+
+func (s spyderData) spyder(key string, secretRule []int64) string {
+	bmessage, _ := json.Marshal(&s)
+	message := string(bmessage)
+	for _, rule := range secretRule {
+		switch rule {
+		case 0:
+			message = util.HmacMD5(message, key)
+		case 1:
+			message = util.HmacSHA1(message, key)
+		case 2:
+			message = util.HmacSHA256(message, key)
+		case 3:
+			message = util.HmacSHA224(message, key)
+		case 4:
+			message = util.HmacSHA512(message, key)
+		case 5:
+			message = util.HmacSHA384(message, key)
+		default:
+			message = util.HmacMD5(message, key)
+		}
+	}
+	return string(message)
 }

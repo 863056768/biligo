@@ -1,12 +1,13 @@
 package biligo
 
 const (
-	BiliApiURL      = "https://api.bilibili.com/"
-	BiliMainURL     = "https://www.bilibili.com/"
-	BiliPassportURL = "https://passport.bilibili.com/"
-	BiliElecURL     = "https://elec.bilibili.com/"
-	BiliLiveURL     = "https://api.live.bilibili.com/"
-	BiliVcURL       = "https://api.vc.bilibili.com/"
+	BiliApiURL       = "https://api.bilibili.com/"
+	BiliMainURL      = "https://www.bilibili.com/"
+	BiliPassportURL  = "https://passport.bilibili.com/"
+	BiliElecURL      = "https://elec.bilibili.com/"
+	BiliLiveURL      = "https://api.live.bilibili.com/"
+	BiliLiveTrackURL = "https://live-trace.bilibili.com/"
+	BiliVcURL        = "https://api.vc.bilibili.com/"
 )
 
 var userAgent = []string{

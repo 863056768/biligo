@@ -75,7 +75,7 @@ func (h *baseClient) request(req *http.Request, v interface{}) ([]byte, error) {
 
 	if h.debug {
 		h.logger.Printf("%s %s  %+v", req.Method, req.URL, v)
-		h.logger.Printf("%s", string(raw))
+		// h.logger.Printf("%s", string(raw))
 	}
 
 	return raw, nil

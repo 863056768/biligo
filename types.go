@@ -1472,6 +1472,50 @@ type LiveRoomInfoByID struct {
 	SpecialType     int   `json:"special_type"`
 	AllSpecialTypes []int `json:"all_special_types"`
 }
+
+type LiveInfoByRoom struct {
+	RoomID         int64  `json:"room_id"`     // 真实直播间ID
+	ShortID        int    `json:"short_id"`    // 短号
+	Uid            int64  `json:"uid"`         // 主播mid
+	LiveStatus     int    `json:"live_status"` // 0:未开播 1:开播
+	Title          string `json:"title"`
+	Cover          string `json:"cover"`
+	Tags           string `json:"tags"`
+	Background     string `json:"background"`
+	Description    string `json:"description"`
+	LiveStartTime  int    `json:"live_start_time"`
+	LiveScreenType int    `json:"live_screen_type"`
+	LockStatus     int    `json:"lock_status"`
+	LockTime       int    `json:"lock_time"`
+	HiddenStatus   int    `json:"hidden_status"`
+	HiddenTime     int    `json:"hidden_time"`
+	AreaID         int64  `json:"area_id"`
+	AreaName       string `json:"area_name"`
+	ParentAreaID   int64  `json:"parent_area_id"`
+	ParentAreaName string `json:"parent_area_name"`
+	Keyframe       string `json:"keyframe"`
+	SpecialType    int    `json:"special_type"`
+	UpSession      string `json:"up_session"`
+	PkStatus       int    `json:"pk_status"`
+	IsStudio       bool   `json:"is_studio"`
+	Pendants       struct {
+		Frame struct {
+			Name  string `json:"name"`
+			Value string `json:"value"`
+			Desc  string `json:"desc"`
+		} `json:"frame"`
+	} `json:"pendants"`
+	OnVoiceJoin int `json:"on_voice_join"`
+	Online      int `json:"online"`
+	// RoomType struct { Three21 int `json:"3-21"` } `json:"room_type"`
+	SubSessionKey    string      `json:"sub_session_key"`
+	LiveID           int64       `json:"live_id"`
+	LiveIDStr        string      `json:"live_id_str"`
+	OfficialRoomID   int         `json:"official_room_id"`
+	OfficialRoomInfo interface{} `json:"official_room_info"`
+	VoiceBackground  string      `json:"voice_background"`
+}
+
 type LiveWsConf struct {
 	RefreshRowFactor float64 `json:"refresh_row_factor"`
 	RefreshRate      int     `json:"refresh_rate"`
@@ -2048,8 +2092,8 @@ type UserInfo struct {
 	// 只能查看自己的
 	//
 	// 默认为0
-	Coins     float32  `json:"coins"`
-	FansBadge bool `json:"fans_badge"` // 是否具有粉丝勋章 false：无 true：有
+	Coins     float32 `json:"coins"`
+	FansBadge bool    `json:"fans_badge"` // 是否具有粉丝勋章 false：无 true：有
 	Official  struct {
 		// 认证类型
 		//
@@ -2161,4 +2205,11 @@ type UserInfo struct {
 		UserUpgradeStatus int  `json:"user_upgrade_status"` //
 		ShowUpgradeWindow bool `json:"show_upgrade_window"` //
 	} `json:"series"` //
+}
+
+type LiveHeartbeat struct {
+	HeartbeatInterval int64   `json:"heartbeat_interval"`
+	Timestamp         int64   `json:"timestamp"`
+	SecretRule        []int64 `json:"secret_rule"`
+	SecretKey         string  `json:"secret_key"`
 }
