@@ -2757,13 +2757,13 @@ func (b *BiliClient) LiveSendDanmaku(roomID int64, color int64, fontsize int, mo
 // - anchor_id: the UID of the Streamer.
 // - uid: the ID of the user.
 // Returns an error.
-func (b *BiliClient) LiveLikeReport(roomID, anchor_id, uid int64) error {
+func (b *BiliClient) LiveLikeReport(roomID, anchor_id, uid, clickTime int64) error {
 	_, err := b.Raw(
 		BiliLiveURL,
 		"xlive/app-ucenter/v1/like_info_v3/like/likeReportV3",
 		"POST",
 		map[string]string{
-			"click_time": "1",
+			"click_time": strconv.FormatInt(clickTime, 10),
 			"room_id":    strconv.FormatInt(roomID, 10),
 			"anchor_id":  strconv.FormatInt(anchor_id, 10),
 			"uid":        strconv.FormatInt(uid, 10),
